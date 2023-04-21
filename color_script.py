@@ -19,7 +19,7 @@ import colorsys
 import webcolors
 
 # For NeoPixel
-from neopixel import *
+#from neopixel import *
 
 SLEEP = 0.5
 
@@ -35,22 +35,6 @@ CHANNELS = 1
 RATE = 16000
 CHUNK = 1024
 DEVICE_INDEX = 0
-
-# LED STRIP CONFIGURATION
-# LED_COUNT      = 10        # Number of LED pixels.
-# LED_PIN        = 18          # GPIO pin connected to the pixels (18 uses PWM!).
-# LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
-# LED_DMA        = 10          # DMA channel to use for generating signal (try 10)
-# LED_BRIGHTNESS = 255  # Set to 0 for darkest and 255 for brightest
-# LED_INVERT     = False    # True to invert the signal (when using NPN transistor level shift)
-# LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
-LED_COUNT = 10
-LED_PIN = 18
-LED_FREQ_HZ = 800000
-LED_DMA = 10
-LED_BRIGHTNESS = 255
-LED_INVERT = False
-LED_CHANNEL = 0
 
 # HASS CONFIGURATION
 # HASS_URL = "http://192.168.1.X:8123"
@@ -108,7 +92,6 @@ class ProcessColor:
         """ Docstring. """
 
         hassSync = self.kwargs.get("hass")
-        ledSync = self.kwargs.get("led")
 
         p = pyaudio.PyAudio()
 
@@ -167,10 +150,6 @@ class ProcessColor:
             print("HS Color: %s" % hs_color)
             print("RGB Color: (%s, %s, %s)" % rgb_color)
             print("Brightness: %s\n" % brightness)
-
-            # For NeoPixels
-            if ledSync:
-                neoPixelStrip(rgb_color=(r, g, b), brightness=brightness)
 
             # For HASS Lights
             if hassSync:
@@ -310,227 +289,6 @@ class hassConn:
 
         return response
 
-
-# pylint: disable=undefined-variable
-class neoPixelStrip:
-    """ NeoPixel library strandtest example.
-
-        Author: Tony DiCola (tony@tonydicola.com)
-        Direct port of the Arduino NeoPixel library strandtest example.  Showcases
-        various animations on a strip of NeoPixels.
-    """
-
-    def __init__(self, **kwargs):
-        """ Create NeoPixel object with appropriate configuration. """
-        self.strip = Adafruit_NeoPixel(
-            LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL
-        )
-
-        self.function = kwargs.get("function")
-        self.color = kwargs.get("color")
-        self.wait_ms = kwargs.get("wait_ms")
-        self.iterations = kwargs.get("iterations")
-        self.entity = kwargs.get("entity")
-        self.rgb_color = kwargs.get("rgb_color")
-        self.brightness = kwargs.get("brightness")
-
-        if self.rgb_color or self.brightness:
-            self.audioColor()
-        else:
-            self.execDemos()
-
-    def audioColor(self):
-        r, g, b = self.rgb_color
-
-        self.strip.begin()
-        self.clearPixels()
-        for i in range(self.strip.numPixels()):
-            self.strip.setBrightness(self.brightness)
-            self.strip.setPixelColor(i, Color(g, r, b))
-            self.strip.show()
-
-    def execDemos(self):
-        self.strip.begin()
-        self.clearPixels()
-        if self.function in ("colorWipe", "allDemo"):
-            self.doColor()
-        elif self.function in ("theaterChase", "allDemo"):
-            self.doTheater()
-        elif self.function in ("rainbowCycle", "allDemo"):
-            self.doRainbow()
-        elif self.function is "hassEntity":
-            self.doHass()
-        elif self.function is "clear":
-            self.clearPixels()
-
-    def doColor(self):
-        print("Color wipe animations.")
-        if self.color or self.wait_ms:
-            self.colorWipe(self.color, self.wait_ms)
-        else:
-            self.colorWipe(Color(255, 0, 0))  # Red wipe
-            self.colorWipe(Color(0, 255, 0))  # Blue wipe
-            self.colorWipe(Color(0, 0, 255))  # Green wipe
-
-    def doTheater(self):
-        print("Theater chase animations.")
-        if self.color or self.wait_ms or self.iterations:
-            self.theaterChase(self.color, self.wait_ms, self.iterations)
-        else:
-            self.theaterChase(Color(127, 127, 127))  # White theater chase
-            self.theaterChase(Color(127, 0, 0))  # Red theater chase
-            self.theaterChase(Color(0, 0, 127))  # Blue theater chase
-
-    def doRainbow(self):
-        print("Rainbow animations.")
-        if self.color or self.wait_ms or self.iterations:
-            self.rainbow(wait_ms, iterations)
-            self.rainbowCycle(wait_ms, iterations)
-            self.theaterChaseRainbow(wait_ms)
-        else:   
-            self.rainbow()
-            self.rainbowCycle()
-            self.theaterChaseRainbow()
-
-    def doHass(self):
-        print("HASS Entity State.")
-        theState = self.checkState()
-        # print('returned state ' + theState)
-
-        if theState is False:
-            self.colorWipe(Color(0, 0, 0), 10)
-            exit()
-        elif theState == "on":
-            self.colorWipe(Color(0, 255, 0))  # Green wipe
-        elif theState == "off":
-            self.colorWipe(Color(255, 0, 0))  # Red wipe
-        elif theState == "armed_home":
-            self.colorWipe(Color(0, 0, 255))  # Red wipe
-        elif theState == "pending":
-            self.theaterChase(Color(127, 0, 0))  # Red theater chase
-        elif theState == "exception":
-            self.blink(Color(0, 127, 0))  # White theater chase
-
-    # Define functions which animate LEDs in various ways.
-    def colorWipe(self, color, wait_ms=50):
-        """Wipe color across display a pixel at a time."""
-        for i in range(self.strip.numPixels()):
-            self.strip.setPixelColor(i, color)
-            self.strip.show()
-            time.sleep(wait_ms / 1000.0)
-
-    def theaterChase(self, color, wait_ms=50, iterations=10):
-        """Movie theater light style chaser animation."""
-        for j in range(iterations):
-            for q in range(3):
-                for i in range(0, self.strip.numPixels(), 3):
-                    self.strip.setPixelColor(i + q, color)
-                self.strip.show()
-                time.sleep(wait_ms / 1000.0)
-                for i in range(0, self.strip.numPixels(), 3):
-                    self.strip.setPixelColor(i + q, 0)
-
-    def wheel(self, pos):
-        """Generate rainbow colors across 0-255 positions."""
-        if pos < 85:
-            theColor = Color(pos * 3, 255 - pos * 3, 0)
-        elif pos < 170:
-            pos -= 85
-            theColor = Color(255 - pos * 3, 0, pos * 3)
-        else:
-            pos -= 170
-            theColor = Color(0, pos * 3, 255 - pos * 3)
-        return theColor
-
-    def rainbow(self, wait_ms=20, iterations=1):
-        """Draw rainbow that fades across all pixels at once."""
-        for j in range(256 * iterations):
-            for i in range(self.strip.numPixels()):
-                self.strip.setPixelColor(i, self.wheel((i + j) & 255))
-            self.strip.show()
-            time.sleep(wait_ms / 1000.0)
-
-    def rainbowCycle(self, wait_ms=20, iterations=5):
-        """Draw rainbow that uniformly distributes itself across all pixels."""
-        for j in range(256 * iterations):
-            for i in range(self.strip.numPixels()):
-                self.strip.setPixelColor(
-                    i, self.wheel((int(i * 256 / self.strip.numPixels()) + j) & 255)
-                )
-            self.strip.show()
-            time.sleep(wait_ms / 1000.0)
-
-    def theaterChaseRainbow(self, wait_ms=50):
-        """Rainbow movie theater light style chaser animation."""
-        for j in range(256):
-            for q in range(3):
-                for i in range(0, self.strip.numPixels(), 3):
-                    self.strip.setPixelColor(i + q, self.wheel((i + j) % 255))
-                self.strip.show()
-                time.sleep(wait_ms / 1000.0)
-                for i in range(0, self.strip.numPixels(), 3):
-                    self.strip.setPixelColor(i + q, 0)
-
-    def clearPixels(self):
-        """ Clear the LEDs. """
-        for i in range(self.strip.numPixels()):
-            self.strip.setPixelColor(i, Color(0, 0, 0))
-        self.strip.show()
-
-    def blink(self, color, wait_ms=150, n=3):
-        """Blink Color."""
-        for x in range(n):
-            for i in range(self.strip.numPixels()):
-                self.strip.setPixelColor(i, color)
-            self.strip.show()
-            time.sleep(wait_ms / 1000.0)
-            self.clearPixels()
-            time.sleep(wait_ms / 1000.0)
-
-    def checkState(self):
-        """ Connect to HASS and display state via LED. """
-        url = "/api/states/" + self.entity
-        response = hassConn(url=url, theType="GET")
-
-        while True:
-            try:
-                theState = response.json()
-                theState = theState["state"]
-                print(entity + " is " + theState)
-                # print(theState)
-                # return theState
-                if theState == "locked":
-                    theState = "on"
-                elif theState == "unlocked":
-                    theState = "off"
-                elif theState == "open":
-                    theState = "on"
-                elif theState == "closed":
-                    theState = "off"
-                elif theState == "armed":
-                    theState = "on"
-                elif theState == "armed_away":
-                    theState = "on"
-                elif theState == "disarmed":
-                    theState = "off"
-                elif theState == "home":
-                    theState = "off"
-                elif theState == "not_home":
-                    theState = "on"
-                break
-
-            except KeyError:
-                theText = json.loads(response.text)
-                # print(theText)
-
-                if theText["message"] == "Entity not found.":
-                    print(entity + " " + theText["message"])
-                    # return False
-                    theState = False
-
-        return theState
-
-
 # Main program logic follows:
 if __name__ == "__main__":
     # Process arguments
@@ -538,11 +296,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c", "--clear", action="store_true", help="clear the display on exit", default=True
     )
-    parser.add_argument("-a", "--all", action="store_true", help="All Examples")
-    parser.add_argument("-w", "--wipe", action="store_true", help="Color Wipe")
-    parser.add_argument("-t", "--theater", action="store_true", help="Theater Chase")
-    parser.add_argument("-r", "--rainbow", action="store_true", help="Rainbow Cycle")
-    parser.add_argument("-x", "--audio", choices=("hass","led", "both"), help="Audio Sync LED or HASS")
+    parser.add_argument("-x", "--audio", choices=("hass"), help="Audio Sync LED or HASS")
     parser.add_argument("-e", "--entity", action="store", help="Entity")
     parser.add_argument("-s", "--stop", action="store_true", help="Stop")
     args = parser.parse_args()
@@ -552,32 +306,12 @@ if __name__ == "__main__":
         print("----------- Starting Color Server ------------")
         print("----------------------------------------------")
         while True:
-
-            if args.wipe or args.all:
-                neoPixelStrip(function="colorWipe")
-
-            if args.theater or args.all:
-                neoPixelStrip(function="theaterChase")
-
-            if args.rainbow or args.all:
-                neoPixelStrip(function="rainbow")
-
-            if args.entity:
-                neoPixelStrip(function="hassEntity", entity=args.entity)
-
             if args.audio:
                 hass = True
-                led = True
-                if args.audio == "hass":
-                    led = False
-                elif args.audio == "led":
-                    hass = False
-
-                ProcessColor(hass=hass, led=led)
+                ProcessColor(hass=hass)
 
             if args.stop:
                 print("Stop function")
-                neoPixelStrip(function="clear")
                 ProcessColor.exec_hass(0)
                 print("----------------------------------------------")
                 print("--------------- Shutting Down! ---------------")
@@ -588,7 +322,6 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         if args.clear:  # pylint: disable=too-many-function-args
-            neoPixelStrip(function="clear")
             ProcessColor.exec_hass(0)
         print("----------------------------------------------")
         print("--------------- Shutting Down! ---------------")
