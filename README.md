@@ -5,6 +5,12 @@ It is a work in progress.
 
 Made for home assistant instance on another server.
 
+# Usage
+
+```bash
+python3 color_script.py -u http://<IP_ADDRESS>:<PORT> -p <API_KEY> -e light.hue_color_lamp_1
+```
+
 # API Key
 
 The application uses the REST API endpoints of HA. This requires the use of Long-Lived Access Tokens or API Key to authenticate. Generate one be navigating to Your Profile in HA and scrolling to the bottom for generating an API Key. Otherwise use an existing key.
@@ -31,7 +37,7 @@ Input Device id - 17 - default
 
 # Command Line
 ```
-usage: color_script.py [-h] [-c] [-u URL] -p APIKEY [-e ENTITY] [-d DEVICE]
+usage: color_script.py [-h] [-c] [-u URL] -p APIKEY -e ENTITY [-d DEVICE]
 
 options:
   -h, --help            show this help message and exit
@@ -41,7 +47,7 @@ options:
   -p APIKEY, --apikey APIKEY
                         API Key for access to Home Assistant
   -e ENTITY, --entity ENTITY
-                        Entity
+                        Comma seperated list of entities to change brightness and colour of
   -d DEVICE, --device DEVICE
                         Device index to use for input, will use default input device if not provided
 ```

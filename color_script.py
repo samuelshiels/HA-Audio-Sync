@@ -18,7 +18,7 @@ import numpy as np
 import colorsys
 import webcolors
 
-SLEEP = 0.5
+SLEEP = 0.05
 
 # AUDIO CONFIGURATION
 #
@@ -59,7 +59,7 @@ def silence():
 
 def get_colour_name(rgb_triplet):
     min_colours = {}
-    for key, name in webcolors.css21_hex_to_names.items():
+    for key, name in webcolors.CSS21_HEX_TO_NAMES.items():
         r_c, g_c, b_c = webcolors.hex_to_rgb(key)
         rd = (r_c - rgb_triplet[0]) ** 2
         gd = (g_c - rgb_triplet[1]) ** 2
@@ -100,7 +100,7 @@ class ProcessColor:
         pDetection.set_unit("Hz")
         pDetection.set_silence(-40)
 
-        print("Audio Controlled LEDs.")
+        #print("Audio Controlled LEDs.")
 
         while True:
             # Read data from device
@@ -112,12 +112,12 @@ class ProcessColor:
             # determine pitch
             samples = np.fromstring(data, dtype=aubio.float_type)
             pitch = pDetection(samples)[0]
-            # print(pitch)
+            # #print(pitch)
 
             # determine volume
             volume = np.sum(samples**2) / len(samples)
             volume = "{:.6f}".format(volume)
-            # print(volume)
+            #print(f"Volume {volume}")
 
             # calculate a brightness based on volume level
             brightness = self.calc_bright(volume)
@@ -132,15 +132,15 @@ class ProcessColor:
                         hs_color = hs_color - 30
             self.color = hs_color
 
-            # print(self.color)
+            # #print(self.color)
             rgb_color = self.hs_to_rbg(hs_color)
             r, g, b = rgb_color
 
             # output something to console
-            print(get_colour_name(rgb_color))
-            print("HS Color: %s" % hs_color)
-            print("RGB Color: (%s, %s, %s)" % rgb_color)
-            print("Brightness: %s\n" % brightness)
+            #print(get_colour_name(rgb_color))
+            #print("HS Color: %s" % hs_color)
+            #print("RGB Color: (%s, %s, %s)" % rgb_color)
+            #print("Brightness: %s\n" % brightness)
 
             # For HASS Lights
             if hassSync:
@@ -170,14 +170,17 @@ class ProcessColor:
 
     def calc_bright(self, brightness):
         """calculate a brightness based on volume level."""
-        brightness = int(float(brightness) * 100)
+        brightness = int(float(brightness) * 10000)
+        #print(f"Brightness {brightness}")
         if brightness < 10:
             brightness = 10
+        if brightness > 100:
+            brightness = 100
         return brightness
 
     def exec_hass(self, hs_color=0, brightness=100):
         saturation = 100
-        if hs_color is 0:
+        if hs_color == 0:
             saturation = 0
 
         url = "/api/services/light/turn_on"
@@ -238,43 +241,46 @@ class hassConn:
         try:
             json.loads(json.dumps(payload))
         except ValueError:
-            print("Invalid JSON!")
+            
+            #print("Invalid JSON!")
+            pass
         self._payload = payload
 
     def post(self):
         """POST the request."""
         response = requests.post(self._url, json=self._payload, headers=self._headers)
         if response.status_code != 200:
-            print(response.text)
+            #print(response.text)
+            pass
 
     def get(self):
         """GET the request."""
         try:
             response = requests.get(self._url, headers=self._headers)
             response.raise_for_status()
-            # print(response.text)
+            # #print(response.text)
         except requests.exceptions.HTTPError as err:
-            print("HTTP Error")
-            print(err)
+            #print("HTTP Error")
+            #print(err)
             exit()
             return "exception"
 
         except requests.exceptions.Timeout:
             # Maybe set up for a retry, or continue in a retry loop
-            print("Connection Timeout!")
+            #print("Connection Timeout!")
             exit()
             return "exception"
 
         except requests.exceptions.TooManyRedirects:
             # Tell the user their URL was bad and try a different one
-            print("Too Many Redirects!")
+            #print("Too Many Redirects!")
             exit()
             return "exception"
 
         except requests.exceptions.RequestException as e:
             # catastrophic error. bail.
-            print("Request Exception!")
-            print(e)
+            #print("Request Exception!")
+            #print(e)
             return "exception"
             # exit()
 
@@ -313,7 +319,15 @@ if __name__ == "__main__":
         help="API Key for access to Home Assistant",
     )
 
-    parser.add_argument("-e", "--entity", action="store", help="Entity")
+    parser.add_argument(
+        "-e",
+        "--entity",
+        type=str,
+        nargs=1,
+        action="store",
+        required=True,
+        help="Comma seperated list of entities to change brightness and colour of",
+    )
 
     parser.add_argument(
         "-d",
@@ -326,36 +340,39 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if args.entity:
+        #print(f"Using entities {args.entity[0]}")
+        COLOR_LIGHTS=str(args.entity[0])
+
     if args.apikey:
         HASS_PASS = str(args.apikey[0])
 
     if args.url != "http://localhost:8123":
-        print(f"Using endpoint {args.url[0]}")
+        #print(f"Using endpoint {args.url[0]}")
         HASS_URL = str(args.url[0])
 
     if args.device != None:
-        print(f"Using device {args.device[0]}")
+        #print(f"Using device {args.device[0]}")
         DEVICE_INDEX = args.device[0]
     else:
         def_input = pyaudio.PyAudio().get_default_input_device_info()
         DEVICE_INDEX = def_input.get("index", 0)
-        print(f'Using default device {def_input.get("index",0)}')
+        #print(f'Using default device {def_input.get("index",0)}')
 
     try:
-        print("----------------------------------------------")
-        print("----------- Starting Color Server ------------")
-        print("----------------------------------------------")
+        #print("----------------------------------------------")
+        #print("----------- Starting Color Server ------------")
+        #print("----------------------------------------------")
         while True:
-            if args.audio:
-                hass = True
-                # ProcessColor(hass=hass)
+            
+            hass = True
+            ProcessColor(hass=hass)
 
             time.sleep(SLEEP)
 
     except KeyboardInterrupt:
-        if args.clear:  # pylint: disable=too-many-function-args
-            ProcessColor.exec_hass(0)
-        print("----------------------------------------------")
-        print("--------------- Shutting Down! ---------------")
-        print("----------------------------------------------")
+        ProcessColor.exec_hass(0)
+        #print("----------------------------------------------")
+        #print("--------------- Shutting Down! ---------------")
+        #print("----------------------------------------------")
         exit(0)
