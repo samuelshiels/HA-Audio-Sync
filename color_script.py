@@ -18,9 +18,6 @@ import numpy as np
 import colorsys
 import webcolors
 
-# For NeoPixel
-# from neopixel import *
-
 SLEEP = 0.5
 
 # AUDIO CONFIGURATION
@@ -37,9 +34,7 @@ CHUNK = 1024
 DEVICE_INDEX = 0
 
 # HASS CONFIGURATION
-# HASS_URL = "http://192.168.1.X:8123"
-# HASS_PASS = "API TOKEN"
-HASS_URL = "http://IP:8123"
+HASS_URL = "http://localhost:8123"
 HASS_PASS = "APIKEYHERE"
 COLOR_LIGHTS = "light.living_room, light.garden_lights"
 WHITE_LIGHTS = ""
@@ -298,8 +293,18 @@ if __name__ == "__main__":
         default=True,
     )
 
+    parser.add_argument(
+        "-u",
+        "--url",
+        type=str,
+        nargs=1,
+        action="store",
+        default="http://localhost:8123",
+        help="URL/IP/Endpoint for Home Assistant. Include the full endpoint that will resolve correctly from this device, including port if necessary. Will default to http://localhost:8123.",
+    )
+
     parser.add_argument("-e", "--entity", action="store", help="Entity")
- 
+
     parser.add_argument(
         "-d",
         "--device",
@@ -311,12 +316,16 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if args.url != "http://localhost:8123":
+        print(f"Using endpoint {args.url[0]}")
+        HASS_URL = str(args.url[0])
+
     if args.device != None:
         print(f"Using device {args.device[0]}")
         DEVICE_INDEX = args.device[0]
     else:
         def_input = pyaudio.PyAudio().get_default_input_device_info()
-        DEVICE_INDEX = def_input.get('index',0)
+        DEVICE_INDEX = def_input.get("index", 0)
         print(f'Using default device {def_input.get("index",0)}')
 
     try:
