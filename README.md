@@ -5,6 +5,10 @@ It is a work in progress.
 
 Made for home assistant instance on another server.
 
+# API Key
+
+The application uses the REST API endpoints of HA. This requires the use of Long-Lived Access Tokens or API Key to authenticate. Generate one be navigating to Your Profile in HA and scrolling to the bottom for generating an API Key. Otherwise use an existing key.
+
 # Device ID
 
 Finding your device IDs can be done via the provided script:
@@ -27,11 +31,15 @@ Input Device id - 17 - default
 
 # Command Line
 ```
-usage: color_script.py [-h] [-c] [-e ENTITY] [-d DEVICE]
+usage: color_script.py [-h] [-c] [-u URL] -p APIKEY [-e ENTITY] [-d DEVICE]
 
 options:
   -h, --help            show this help message and exit
   -c, --clear           clear the display on exit
+  -u URL, --url URL     URL/IP/Endpoint for Home Assistant. Include the full endpoint that will resolve correctly from this device, including port if necessary. Will default to
+                        http://localhost:8123.
+  -p APIKEY, --apikey APIKEY
+                        API Key for access to Home Assistant
   -e ENTITY, --entity ENTITY
                         Entity
   -d DEVICE, --device DEVICE
