@@ -303,6 +303,16 @@ if __name__ == "__main__":
         help="URL/IP/Endpoint for Home Assistant. Include the full endpoint that will resolve correctly from this device, including port if necessary. Will default to http://localhost:8123.",
     )
 
+    parser.add_argument(
+        "-p",
+        "--apikey",
+        type=str,
+        nargs=1,
+        action="store",
+        required=True,
+        help="API Key for access to Home Assistant",
+    )
+
     parser.add_argument("-e", "--entity", action="store", help="Entity")
 
     parser.add_argument(
@@ -315,6 +325,9 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    if args.apikey:
+        HASS_PASS = str(args.apikey[0])
 
     if args.url != "http://localhost:8123":
         print(f"Using endpoint {args.url[0]}")
