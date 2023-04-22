@@ -19,7 +19,7 @@ import colorsys
 import webcolors
 
 # For NeoPixel
-#from neopixel import *
+# from neopixel import *
 
 SLEEP = 0.5
 
@@ -40,11 +40,7 @@ DEVICE_INDEX = 0
 # HASS_URL = "http://192.168.1.X:8123"
 # HASS_PASS = "API TOKEN"
 HASS_URL = "http://IP:8123"
-HASS_PASS = (
-    "API"
-    "KEY"
-    "HERE"
-)
+HASS_PASS = "APIKEYHERE"
 COLOR_LIGHTS = "light.living_room, light.garden_lights"
 WHITE_LIGHTS = ""
 
@@ -79,17 +75,17 @@ def get_colour_name(rgb_triplet):
 
 # pylint: disable=undefined-variable
 class ProcessColor:
-    """ Docstring. """
+    """Docstring."""
 
     def __init__(self, **kwargs):
-        """ Docstring. """
+        """Docstring."""
         self.color = 0
         self.kwargs = kwargs
         with silence():
             self.audioSync()
 
     def audioSync(self):  # pylint: disable=too-many-locals
-        """ Docstring. """
+        """Docstring."""
 
         hassSync = self.kwargs.get("hass")
 
@@ -124,7 +120,7 @@ class ProcessColor:
             # print(pitch)
 
             # determine volume
-            volume = np.sum(samples ** 2) / len(samples)
+            volume = np.sum(samples**2) / len(samples)
             volume = "{:.6f}".format(volume)
             # print(volume)
 
@@ -134,13 +130,13 @@ class ProcessColor:
             # get color based on pitch
             hs_color = self.calc_hs(pitch)
             if PREVENT_STATIC:
-                if (self.color <= (hs_color + 5) and self.color >= (hs_color - 5)):
+                if self.color <= (hs_color + 5) and self.color >= (hs_color - 5):
                     if int(hs_color) <= 30:
                         hs_color = hs_color + 30
                     else:
                         hs_color = hs_color - 30
             self.color = hs_color
-            
+
             # print(self.color)
             rgb_color = self.hs_to_rbg(hs_color)
             r, g, b = rgb_color
@@ -161,7 +157,7 @@ class ProcessColor:
         stream.close()
 
     def calc_hs(self, pitch):
-        """ calculate the hs color based off max of 500Hz? thats about the highest ive seen. """
+        """calculate the hs color based off max of 500Hz? thats about the highest ive seen."""
         hs_color = pitch / 500
         hs_color = hs_color * 360
         if hs_color > 360:
@@ -169,7 +165,7 @@ class ProcessColor:
         return hs_color
 
     def hs_to_rbg(self, hs_color):
-        """ Get RGB color from HS. """
+        """Get RGB color from HS."""
         r, g, b = colorsys.hsv_to_rgb(hs_color / 360.0, 1, 1)
         r = int(r * 255)
         g = int(g * 255)
@@ -178,7 +174,7 @@ class ProcessColor:
         return rgb_color
 
     def calc_bright(self, brightness):
-        """ calculate a brightness based on volume level. """
+        """calculate a brightness based on volume level."""
         brightness = int(float(brightness) * 100)
         if brightness < 10:
             brightness = 10
@@ -203,10 +199,10 @@ class ProcessColor:
 
 
 class hassConn:
-    """ Format request to HASS. """
+    """Format request to HASS."""
 
     def __init__(self, **kwargs):
-        """ Initialize the Class. """
+        """Initialize the Class."""
         self._url = None
         self._headers = None
         self._payload = None
@@ -228,22 +224,22 @@ class hassConn:
             self.post()
 
     def setUrl(self, url):
-        """ Assign URL to var.
+        """Assign URL to var.
 
-        Format: '/api/services/light/turn_on' """
+        Format: '/api/services/light/turn_on'"""
         self._url = HASS_URL + url
 
     def setHeaders(self, headers):
-        """ Assign header var. """
+        """Assign header var."""
         if not headers:
             headers = {
                 "Authorization": "Bearer " + HASS_PASS,
-                "content-type": "application/json"
-                }
+                "content-type": "application/json",
+            }
         self._headers = headers
 
     def setPayload(self, payload):
-        """ Verify payload is valid JSON and assign to var. """
+        """Verify payload is valid JSON and assign to var."""
         try:
             json.loads(json.dumps(payload))
         except ValueError:
@@ -251,13 +247,13 @@ class hassConn:
         self._payload = payload
 
     def post(self):
-        """ POST the request. """
+        """POST the request."""
         response = requests.post(self._url, json=self._payload, headers=self._headers)
         if response.status_code != 200:
             print(response.text)
 
     def get(self):
-        """ GET the request. """
+        """GET the request."""
         try:
             response = requests.get(self._url, headers=self._headers)
             response.raise_for_status()
@@ -285,21 +281,43 @@ class hassConn:
             print("Request Exception!")
             print(e)
             return "exception"
-            # exit()    
+            # exit()
 
         return response
+
 
 # Main program logic follows:
 if __name__ == "__main__":
     # Process arguments
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument(
-        "-c", "--clear", action="store_true", help="clear the display on exit", default=True
+        "-c",
+        "--clear",
+        action="store_true",
+        help="clear the display on exit",
+        default=True,
     )
-    parser.add_argument("-x", "--audio", choices=("hass"), help="Audio Sync LED or HASS")
+
     parser.add_argument("-e", "--entity", action="store", help="Entity")
-    parser.add_argument("-s", "--stop", action="store_true", help="Stop")
+ 
+    parser.add_argument(
+        "-d",
+        "--device",
+        type=int,
+        nargs=1,
+        default=None,
+        help="Device index to use for input, will use default input device if not provided",
+    )
+
     args = parser.parse_args()
+
+    if args.device != None:
+        print(f"Using device {args.device[0]}")
+        DEVICE_INDEX = args.device[0]
+    else:
+        def_input = pyaudio.PyAudio().get_default_input_device_info()
+        DEVICE_INDEX = def_input.get('index',0)
+        print(f'Using default device {def_input.get("index",0)}')
 
     try:
         print("----------------------------------------------")
@@ -308,15 +326,7 @@ if __name__ == "__main__":
         while True:
             if args.audio:
                 hass = True
-                ProcessColor(hass=hass)
-
-            if args.stop:
-                print("Stop function")
-                ProcessColor.exec_hass(0)
-                print("----------------------------------------------")
-                print("--------------- Shutting Down! ---------------")
-                print("----------------------------------------------")
-                exit(0)
+                # ProcessColor(hass=hass)
 
             time.sleep(SLEEP)
 
@@ -327,4 +337,3 @@ if __name__ == "__main__":
         print("--------------- Shutting Down! ---------------")
         print("----------------------------------------------")
         exit(0)
-
