@@ -9,6 +9,7 @@ import time
 import requests
 import json
 import argparse
+from dotenv import load_dotenv
 
 # For Music
 # import alsaaudio as aa
@@ -315,7 +316,7 @@ if __name__ == "__main__":
         type=str,
         nargs=1,
         action="store",
-        required=True,
+        #required=True,
         help="API Key for access to Home Assistant",
     )
 
@@ -339,6 +340,10 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    load_dotenv()
+    if os.getenv('HA_APIKEY') is not None:
+        HASS_PASS = os.getenv('HA_APIKEY')
 
     if args.entity:
         #print(f"Using entities {args.entity[0]}")

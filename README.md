@@ -11,6 +11,10 @@ Made for home assistant instance on another server.
 python3 color_script.py -u http://<IP_ADDRESS>:<PORT> -p <API_KEY> -e light.hue_color_lamp_1
 ```
 
+## .env
+You can specify a .env file in the current working directory and specify the following parameters:
+* HA_APIKEY=\<API_KEY\>
+
 # API Key
 
 The application uses the REST API endpoints of HA. This requires the use of Long-Lived Access Tokens or API Key to authenticate. Generate one be navigating to Your Profile in HA and scrolling to the bottom for generating an API Key. Otherwise use an existing key.
