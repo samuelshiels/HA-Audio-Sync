@@ -9,7 +9,7 @@ import time
 import requests
 import json
 import argparse
-
+import pprint
 # For Music
 # import alsaaudio as aa
 import pyaudio
@@ -36,7 +36,7 @@ DEVICE_INDEX = 0
 # HASS CONFIGURATION
 HASS_URL = "http://localhost:8123"
 HASS_PASS = "APIKEYHERE"
-COLOR_LIGHTS = "light.living_room, light.garden_lights"
+COLOR_LIGHTS = "light.living_room,light.garden_lights"
 WHITE_LIGHTS = ""
 
 # prevents same colors repeating by changing hs +/- 30
@@ -67,6 +67,26 @@ def get_colour_name(rgb_triplet):
         min_colours[(rd + gd + bd)] = name
     return min_colours[min(min_colours.keys())]
 
+def getStates():
+    states = {}
+    url = f'/api/states'
+    hc = hassConn(url=url,payload={},theType='GET')
+    states = hc.get()
+    print(states)
+
+def getDeviceStates():
+    devices = COLOR_LIGHTS.split(',')
+    #
+    for e in devices:
+        pprint.pprint(getDeviceState(e.strip()))
+        pass
+
+def getDeviceState(device_id):
+    state = {}
+    url = f'/api/states/{device_id}'
+    hc = hassConn(url=url,payload={},theType='GET')
+    state = hc.get()
+    return state
 
 # pylint: disable=undefined-variable
 class ProcessColor:
@@ -193,8 +213,8 @@ class ProcessColor:
             "transition": 0.5,
         }
 
-        hassConn(url=url, payload=payload)
-
+        hc = hassConn(url=url, payload=payload)
+        hc.post()
 
 class hassConn:
     """Format request to HASS."""
@@ -216,10 +236,10 @@ class hassConn:
         self.setHeaders(self._headers)
         self.setPayload(self._payload)
 
-        if kwargs.get("theType") == "GET":
-            self.get()
-        else:
-            self.post()
+        #if kwargs.get("theType") == "GET":
+        #    self.get()
+        #else:
+        #    self.post()
 
     def setUrl(self, url):
         """Assign URL to var.
@@ -257,7 +277,8 @@ class hassConn:
         """GET the request."""
         try:
             response = requests.get(self._url, headers=self._headers)
-            response.raise_for_status()
+            #response.raise_for_status()
+            return response.text
             # #print(response.text)
         except requests.exceptions.HTTPError as err:
             #print("HTTP Error")
@@ -363,11 +384,14 @@ if __name__ == "__main__":
         #print("----------------------------------------------")
         #print("----------- Starting Color Server ------------")
         #print("----------------------------------------------")
-        while True:
-            
+        #getStates()
+        getDeviceStates()
+        run = True
+        while run:
+            run = False
             hass = True
-            ProcessColor(hass=hass)
-
+            #ProcessColor(hass=hass)
+            
             time.sleep(SLEEP)
 
     except KeyboardInterrupt:
